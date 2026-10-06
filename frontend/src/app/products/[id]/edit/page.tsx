@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getProductById, updateProduct } from "@/lib/api";
+import { enrichProductDescription, getProductById, updateProduct } from "@/lib/api";
 import { getRoleFromToken, getToken } from "@/lib/auth";
 
 export default function EditProductPage() {
@@ -17,6 +17,8 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichMessage, setEnrichMessage] = useState("");
 
   useEffect(() => {
     const token = getToken();
@@ -81,6 +83,26 @@ export default function EditProductPage() {
     }
   }
 
+  async function handleGenerateDescription() {
+    const token = getToken();
+    if (!token || getRoleFromToken(token) !== "ADMIN") {
+      router.replace("/products");
+      return;
+    }
+
+    setError("");
+    setEnrichMessage("");
+    setIsEnriching(true);
+    try {
+      const result = await enrichProductDescription({ token, productId });
+      setEnrichMessage(`${result.message} (${result.jobId})`);
+    } catch {
+      setError("Could not queue automatic description. Please try again.");
+    } finally {
+      setIsEnriching(false);
+    }
+  }
+
   if (loading) {
     return <main className="mx-auto w-full max-w-2xl px-6 py-8">Loading product...</main>;
   }
@@ -114,6 +136,15 @@ export default function EditProductPage() {
             rows={4}
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none ring-blue-500 focus:ring-2"
           />
+          <button
+            type="button"
+            onClick={handleGenerateDescription}
+            disabled={isEnriching}
+            className="mt-2 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+          >
+            {isEnriching ? "Enfileirando..." : "Gerar Descrição Automática (IA)"}
+          </button>
+          {enrichMessage ? <p className="mt-2 text-sm text-emerald-700">{enrichMessage}</p> : null}
         </div>
 
         <div>

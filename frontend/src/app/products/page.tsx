@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import AiStreamModal from "@/components/AiStreamModal";
 import { deleteProduct, downloadReport, generateReport, getProducts, getReport, Product, Report } from "@/lib/api";
 import { clearToken, getRoleFromToken, getToken, UserRole } from "@/lib/auth";
 
@@ -253,23 +254,30 @@ function ProductsPageContent() {
                 <p className="mt-4 text-base font-semibold text-zinc-900">
                   {formatPrice(product.price)}
                 </p>
-                {role === "ADMIN" ? (
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <Link
-                      href={`/products/${product.id}/edit`}
-                      className="rounded-lg border border-zinc-300 px-3 py-2 text-center text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      disabled={isDeleting === product.id}
-                      className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-60"
-                    >
-                      {isDeleting === product.id ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                ) : null}
+                <div className="mt-4 flex flex-col gap-2">
+                  <AiStreamModal
+                    productId={product.id}
+                    buttonLabel="Gerar Insights"
+                    buttonClassName="w-full rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100"
+                  />
+                  {role === "ADMIN" ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href={`/products/${product.id}/edit`}
+                        className="rounded-lg border border-zinc-300 px-3 py-2 text-center text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        disabled={isDeleting === product.id}
+                        className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-60"
+                      >
+                        {isDeleting === product.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
               </article>
             ))}
           </section>

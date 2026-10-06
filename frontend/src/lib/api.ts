@@ -139,6 +139,33 @@ export async function createProduct(params: {
   return response.json() as Promise<Product>;
 }
 
+export function getProductAnalysisStreamUrl(productId: string, token: string): string {
+  const url = new URL(`${API_BASE_URL}/ai/stream-analysis/${productId}`);
+  url.searchParams.set('token', token);
+  return url.toString();
+}
+
+export async function enrichProductDescription(params: {
+  token: string;
+  productId: string;
+}): Promise<{ message: string; jobId: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/products/${params.productId}/enrich-description`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${params.token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to queue description enrichment');
+  }
+
+  return response.json() as Promise<{ message: string; jobId: string }>;
+}
+
 export async function updateProduct(params: {
   token: string;
   productId: string;

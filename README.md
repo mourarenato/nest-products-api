@@ -71,6 +71,9 @@ Required keys:
 - `REDIS_HOST`
 - `REDIS_PORT`
 - `REDIS_PASSWORD` (optional)
+- `BULL_BOARD_USER` (default `admin`)
+- `BULL_BOARD_PASSWORD` (default `admin`)
+- `OPENAI_API_KEY` (required for AI insights and description enrichment)
 
 ### Frontend (`frontend/.env.local`)
 
@@ -178,12 +181,17 @@ npm run lint          # lint frontend
 - `PATCH /products/:id` (`ADMIN`)
 - `DELETE /products/:id` (`ADMIN`)
 - `POST /products/bulk` (`ADMIN`, queued)
+- `POST /products/:id/enrich-description` (JWT, queued AI description)
 
 ### Reports (queued)
 
 - `POST /reports/generate` (`ADMIN`, `PROFESSIONAL`)
 - `GET /reports/:id` (`ADMIN`, `PROFESSIONAL`)
 - `GET /reports/:id/download` (`ADMIN`, `PROFESSIONAL`) - CSV download
+
+### AI
+
+- `GET /ai/stream-analysis/:productId` (JWT, server-sent events)
 
 ## Queue Workflows
 
@@ -198,6 +206,10 @@ npm run lint          # lint frontend
 - Worker processes products in batches (`skip/take`)
 - Builds CSV
 - Marks status: `PENDING -> PROCESSING -> COMPLETED|FAILED`
+
+## Queue Dashboard
+
+Bull Board is exposed at `/admin/queues` (e.g. `http://localhost:3001/admin/queues`). Use it to inspect background job queues (reports, bulk creation, and AI enrichment): job states, retries, failures, and completed work against Redis. Access is gated with HTTP basic auth (see `BULL_BOARD_USER` / `BULL_BOARD_PASSWORD` in `.env.example`; defaults are `admin` / `admin`).
 
 ## Frontend Usage Flow
 

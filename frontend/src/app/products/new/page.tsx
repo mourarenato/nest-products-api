@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createProduct } from "@/lib/api";
+import { createProduct, enrichProductDescription } from "@/lib/api";
 import { getRoleFromToken, getToken } from "@/lib/auth";
 
 export default function NewProductPage() {
@@ -13,6 +13,9 @@ export default function NewProductPage() {
   const [price, setPrice] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichMessage, setEnrichMessage] = useState("");
+  const [savedProductId, setSavedProductId] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getToken();
@@ -44,6 +47,11 @@ export default function NewProductPage() {
       return;
     }
 
+    if (savedProductId) {
+      router.push(`/products/${savedProductId}/edit`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await createProduct({
@@ -59,6 +67,47 @@ export default function NewProductPage() {
       setError("Could not create product. Please check data and try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleGenerateDescription() {
+    setError("");
+    setEnrichMessage("");
+
+    const token = getToken();
+    if (!token || getRoleFromToken(token) !== "ADMIN") {
+      router.replace("/products");
+      return;
+    }
+
+    const parsedPrice = Number(price);
+    if (!name.trim() || Number.isNaN(parsedPrice) || parsedPrice <= 0) {
+      setError("Name and a price greater than 0 are required before generating a description.");
+      return;
+    }
+
+    setIsEnriching(true);
+    try {
+      let productId = savedProductId;
+      if (!productId) {
+        const created = await createProduct({
+          token,
+          payload: {
+            name,
+            description: description || undefined,
+            price: parsedPrice,
+          },
+        });
+        productId = created.id;
+        setSavedProductId(created.id);
+      }
+
+      const result = await enrichProductDescription({ token, productId });
+      setEnrichMessage(`${result.message} (${result.jobId})`);
+    } catch {
+      setError("Could not queue automatic description. Please try again.");
+    } finally {
+      setIsEnriching(false);
     }
   }
 
@@ -91,6 +140,15 @@ export default function NewProductPage() {
             rows={4}
             className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none ring-blue-500 focus:ring-2"
           />
+          <button
+            type="button"
+            onClick={handleGenerateDescription}
+            disabled={isEnriching}
+            className="mt-2 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-60"
+          >
+            {isEnriching ? "Enfileirando..." : "Gerar Descrição Automática (IA)"}
+          </button>
+          {enrichMessage ? <p className="mt-2 text-sm text-emerald-700">{enrichMessage}</p> : null}
         </div>
 
         <div>
@@ -113,7 +171,7 @@ export default function NewProductPage() {
           disabled={isSubmitting}
           className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:opacity-60"
         >
-          {isSubmitting ? "Creating..." : "Create Product"}
+          {isSubmitting ? "Creating..." : savedProductId ? "Open saved product" : "Create Product"}
         </button>
       </form>
     </main>

@@ -49,7 +49,10 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
     const product = await this.findOne(id);
-    Object.assign(product, updateProductDto);
+    const changes = Object.fromEntries(
+      Object.entries(updateProductDto).filter(([, value]) => value !== undefined),
+    );
+    Object.assign(product, changes);
     return this.productsRepository.save(product);
   }
 
