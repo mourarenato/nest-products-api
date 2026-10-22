@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="" target="_blank">
+    <img src="https://raw.githubusercontent.com/mourarenato/nest-products-api/refs/heads/master/frontend/public/images/homepage-products.png" width="600">
+  </a>
+</p>
+
 # Products Platform (NestJS + Next.js)
 
 Full-stack product management platform with role-based access control, background jobs with queues, and CSV report generation.
